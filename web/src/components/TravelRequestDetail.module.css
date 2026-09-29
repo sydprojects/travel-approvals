@@ -1,0 +1,99 @@
+.article {
+  max-width: 32rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.status {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pending {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.approved {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.rejected {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.fields dt {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.fields dd {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.actions button {
+  padding: 0.55rem 1.1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #16a34a;
+  color: white;
+}
+
+.actions button.reject {
+  background: #dc2626;
+}
+
+.actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.actions button:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.liveStatus {
+  min-height: 1.2rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+}
+
+.notFound {
+  padding: 1rem 1.25rem;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #7f1d1d;
+  border-radius: 0.75rem;
+}
