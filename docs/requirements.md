@@ -1,4 +1,4 @@
-# Requirements — Travel Request Approvals
+# Requirements - Travel Request Approvals
 
 Written before any test or implementation code, per the project's workflow:
 requirements first, then tests from these requirements, then implementation.
@@ -32,7 +32,7 @@ Validation rules (enforced by the BFF, not trusted from the client):
 - `startDate`, `endDate`: valid ISO dates; `startDate <= endDate`.
 - `status`: one of the three values above; only `pending -> approved` and
   `pending -> approved | rejected` are legal transitions. `approved` and
-  `rejected` are terminal — no further transition is accepted.
+  `rejected` are terminal - no further transition is accepted.
 
 ## Feature: List travel requests
 
@@ -73,12 +73,12 @@ Validation rules (enforced by the BFF, not trusted from the client):
   Verified by: e2e.
 - **REQ-CREATE-4**: The submit button is disabled and labelled as busy
   (e.g. "Submitting…") while the request is in flight, and re-enabled on
-  both success and failure — never left permanently disabled after an
+  both success and failure - never left permanently disabled after an
   error.
   Verified by: component test.
 - **REQ-CREATE-5**: Where the created request's confirmation/focus target
   lands, and what happens to the emptied form, is governed by
-  **TODO(eduardo) — decision 1**, see "Open decisions" below. Until that
+  **TODO(eduardo) - decision 1**, see "Open decisions" below. Until that
   decision is implemented, the e2e keyboard-only test for this step is
   expected to fail.
 
@@ -102,15 +102,15 @@ Validation rules (enforced by the BFF, not trusted from the client):
 ## Cross-cutting: async states
 
 Every view that fetches or mutates data must implement all four states
-distinctly — this applies to list, detail, create, and approve/reject
+distinctly - this applies to list, detail, create, and approve/reject
 alike:
 
 - **REQ-STATE-1** (loading): a visible loading indicator while the request
   is in flight, not a blank screen.
 - **REQ-STATE-2** (empty): a distinct "no data" message when a successful
-  response contains zero items — not indistinguishable from the loading or
+  response contains zero items - not indistinguishable from the loading or
   error state. The exact empty-state copy and whether it offers a
-  call-to-action (e.g. "Create your first request") is **TODO(eduardo) —
+  call-to-action (e.g. "Create your first request") is **TODO(eduardo) -
   decision 3**, see "Open decisions" below.
 - **REQ-STATE-3** (error): a distinct, human-readable error message on
   failure, with no leaked stack traces or raw server error bodies.
@@ -127,7 +127,7 @@ distinct, correct content.
   Verified by: jest-axe (landmark/heading rules) on every page.
 - **REQ-A11Y-2**: Every interactive element is reachable by keyboard alone,
   in a logical tab order, with no keyboard trap.
-  Verified by: Playwright keyboard-only e2e covering create → approve.
+  Verified by: Playwright keyboard-only e2e covering create -> approve.
 - **REQ-A11Y-3**: Every focusable element has a visible focus indicator
   (not `outline: none` without a replacement).
   Verified by: manual check + Playwright screenshot diff on `:focus`.
@@ -142,7 +142,7 @@ distinct, correct content.
   Verified by: component test asserting the live region's text content
   updates.
 - **REQ-A11Y-6**: Text and meaningful UI components meet WCAG 2.2 AA
-  contrast (4.5:1 normal text, 3:1 large text/UI components) — checked with
+  contrast (4.5:1 normal text, 3:1 large text/UI components) - checked with
   a contrast tool against the actual chosen palette, not assumed from
   "looks dark enough."
   Verified by: axe (`color-contrast` rule) + one manual spot check per
@@ -161,7 +161,7 @@ distinct, correct content.
 - **REQ-BFF-2**: The BFF never forwards the platform API's raw error body
   or stack trace to the browser. What shape a mapped error response takes
   (fields, granularity, whether validation errors and downstream failures
-  look different) is **TODO(eduardo) — decision 2**, see "Open decisions"
+  look different) is **TODO(eduardo) - decision 2**, see "Open decisions"
   below. Until decided, the unit test asserting the mapped error shape is
   expected to fail.
 - **REQ-BFF-3**: A downstream platform-API failure (timeout, 500, network
@@ -174,14 +174,14 @@ distinct, correct content.
 
 These three are intentionally left unimplemented (stubbed so the rest of
 the app compiles and runs). Each stub will make its associated test above
-fail until you implement it — that's expected, not a bug.
+fail until you implement it - that's expected, not a bug.
 
 1. **Focus management after create-submit** (REQ-CREATE-5). Trade-off:
    focusing the new request's heading is the more standard SPA pattern and
    confirms "something happened and here it is," but focusing back on the
    form (e.g. a confirmation message before the input) keeps the user in
    place if they're about to create several requests in a row. Neither is
-   free from a screen-reader-announcement standpoint — decide which
+   free from a screen-reader-announcement standpoint - decide which
    matters more for this workflow.
 
 2. **BFF error-mapping shape** (REQ-BFF-2). Trade-off: a flat
