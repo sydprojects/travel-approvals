@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { TravelRequest, TravelRequestStatus } from "@/lib/types";
 import styles from "./TravelRequestList.module.css";
 
@@ -28,7 +29,7 @@ export function TravelRequestList({ items }: Props) {
         <ul className={styles.list}>
           {items.map((item) => (
             <li key={item.id} className={styles.item}>
-              <a href={`/requests/${item.id}`} className={styles.link}>
+              <Link href={`/requests/${item.id}`} className={styles.link}>
                 <div>
                   <p className={styles.requester}>{item.requesterName}</p>
                   <p className={styles.destination}>{item.destination}</p>
@@ -37,7 +38,7 @@ export function TravelRequestList({ items }: Props) {
                 <span className={`${styles.status} ${styles[item.status]}`}>
                   {STATUS_LABEL[item.status]}
                 </span>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

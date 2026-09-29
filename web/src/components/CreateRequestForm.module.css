@@ -15,28 +15,28 @@
   gap: 1rem;
 }
 
-label {
+.field label {
   font-weight: 600;
   font-size: 0.9rem;
 }
 
-input,
-textarea {
+.field input,
+.field textarea {
   padding: 0.55rem 0.7rem;
   border: 1px solid #9ca3af;
   border-radius: 0.5rem;
   font: inherit;
 }
 
-input:focus-visible,
-textarea:focus-visible,
-button:focus-visible {
+.field input:focus-visible,
+.field textarea:focus-visible,
+.submit:focus-visible {
   outline: 3px solid #1d4ed8;
   outline-offset: 1px;
 }
 
-input[aria-invalid="true"],
-textarea[aria-invalid="true"] {
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
   border-color: #b91c1c;
 }
 
@@ -46,7 +46,7 @@ textarea[aria-invalid="true"] {
   margin: 0;
 }
 
-button {
+.submit {
   justify-self: start;
   padding: 0.6rem 1.2rem;
   border: 0;
@@ -57,7 +57,7 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
+.submit:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }

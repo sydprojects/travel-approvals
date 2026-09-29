@@ -177,7 +177,7 @@ export function CreateRequestForm({ onCreated }: Props) {
         )}
       </div>
 
-      <button type="submit" disabled={submitting}>
+      <button type="submit" disabled={submitting} className={styles.submit}>
         {submitting ? "Submitting…" : "Submit request"}
       </button>
 

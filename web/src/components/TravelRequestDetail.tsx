@@ -19,7 +19,8 @@ type Props = {
   onDecided: (item: TravelRequest) => void;
 };
 
-export function TravelRequestDetail({ item, onDecided }: Props) {
+export function TravelRequestDetail({ item: initialItem, onDecided }: Props) {
+  const [item, setItem] = useState(initialItem);
   const [deciding, setDeciding] = useState(false);
   const [status, setStatus] = useState("");
 
@@ -46,6 +47,7 @@ export function TravelRequestDetail({ item, onDecided }: Props) {
         return;
       }
       setStatus(`Request ${body.status}.`);
+      setItem(body);
       onDecided(body);
     } catch {
       setStatus("Network error. Please try again.");
