@@ -16,7 +16,7 @@ function formatDate(d: string) {
 
 type Props = {
   item: TravelRequest | null;
-  onDecided: (item: TravelRequest) => void;
+  onDecided?: (item: TravelRequest) => void;
 };
 
 export function TravelRequestDetail({ item: initialItem, onDecided }: Props) {
@@ -48,7 +48,7 @@ export function TravelRequestDetail({ item: initialItem, onDecided }: Props) {
       }
       setStatus(`Request ${body.status}.`);
       setItem(body);
-      onDecided(body);
+      onDecided?.(body);
     } catch {
       setStatus("Network error. Please try again.");
     } finally {
