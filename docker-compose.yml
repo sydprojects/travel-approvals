@@ -1,0 +1,21 @@
+services:
+  api:
+    build: ./api
+    container_name: travel_approvals_api
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - ALLOWED_ORIGIN=http://localhost:3000
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    container_name: travel_approvals_web
+    ports:
+      - "3000:3000"
+    environment:
+      - PLATFORM_API_URL=http://api:4000
+    depends_on:
+      - api
+    restart: unless-stopped
