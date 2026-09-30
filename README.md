@@ -159,6 +159,23 @@ happened:
    was blocked by this specific development VPS's firewall configuration,
    unrelated to the project; verified instead via `docker exec` against the
    containers directly.
+8. Audited every acceptance criterion in `docs/requirements.md` against the
+   actual test suite rather than assuming earlier claims were accurate.
+   Found and closed several gaps this way: `REQ-A11Y-3` (focus visibility)
+   and `REQ-STATE-1` (loading states) had zero automated coverage despite
+   being marked verified; `REQ-A11Y-6` (contrast) claimed a manual check
+   that had never been performed, so the WCAG formula was run against all
+   12 color pairings actually used in the app instead. Responsiveness
+   (required by the brief) had never been checked at all; found and fixed
+   two real overflow risks at phone width.
+9. `web/e2e/no-keyboard-trap.spec.ts` was written by Codex (GPT), not
+   Claude - delegated deliberately to split cost/role across two paid
+   plans. Getting Codex to actually run required working around Codex's
+   own sandbox being scoped to a different directory than this project
+   (staged a clone inside the trusted path, handed Codex the task there,
+   reviewed its diff, then applied it here after verifying it passed).
+   That detour is the honest record of what "delegating to an agent"
+   costs in practice, not a smoothed-over "and then Codex wrote it."
 
 No invented users, metrics, or production claims. This has not been
 deployed anywhere; "verified" above means run and checked in this
