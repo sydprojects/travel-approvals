@@ -2,9 +2,10 @@
 
 Written before any test or implementation code, per the project's workflow:
 requirements first, then tests from these requirements, then implementation.
-Every ID below must map to at least one passing test before the slice is
-considered done (see the three exceptions in "Open decisions" at the end,
-which stay red until a human decision fills them in).
+Every ID below maps to at least one passing test. Three requirements
+(REQ-CREATE-5, REQ-BFF-2, REQ-STATE-2) were originally stubbed as open
+product/UX decisions for a human to resolve later; see "Resolved
+decisions" at the end for what was chosen and why.
 
 ## Domain model
 
@@ -76,11 +77,12 @@ Validation rules (enforced by the BFF, not trusted from the client):
   both success and failure - never left permanently disabled after an
   error.
   Verified by: component test.
-- **REQ-CREATE-5**: Where the created request's confirmation/focus target
-  lands, and what happens to the emptied form, is governed by
-  **TODO(eduardo) - decision 1**, see "Open decisions" below. Until that
-  decision is implemented, the e2e keyboard-only test for this step is
-  expected to fail.
+- **REQ-CREATE-5**: After a successful create, navigate to the new
+  request's own page, whose heading names the requester, so keyboard and
+  screen-reader users land somewhere that concretely confirms which
+  request was created (decision 1, resolved - see "Resolved decisions").
+  Verified by: Playwright e2e asserting the focused heading's text after
+  create-submit (`web/e2e/keyboard-flow.spec.ts`).
 
 ## Feature: Approve / reject travel request
 
@@ -110,9 +112,10 @@ alike:
   Verified by: component test on each route's `loading.tsx`.
 - **REQ-STATE-2** (empty): a distinct "no data" message when a successful
   response contains zero items - not indistinguishable from the loading or
-  error state. The exact empty-state copy and whether it offers a
-  call-to-action (e.g. "Create your first request") is **TODO(eduardo) -
-  decision 3**, see "Open decisions" below.
+  error state - including a "Create your first request" call-to-action
+  (decision 3, resolved - see "Resolved decisions").
+  Verified by: component test asserting the message and the CTA link's
+  `href`.
 - **REQ-STATE-3** (error): a distinct, human-readable error message on
   failure, with no leaked stack traces or raw server error bodies.
 - **REQ-STATE-4** (success): the normal populated view.
@@ -180,40 +183,50 @@ distinct, correct content.
   downstream service.
   Verified by: unit test per route handler (valid + invalid payloads).
 - **REQ-BFF-2**: The BFF never forwards the platform API's raw error body
-  or stack trace to the browser. What shape a mapped error response takes
-  (fields, granularity, whether validation errors and downstream failures
-  look different) is **TODO(eduardo) - decision 2**, see "Open decisions"
-  below. Until decided, the unit test asserting the mapped error shape is
-  expected to fail.
+  or stack trace to the browser. Validation failures return a structured
+  `{ error, fields }` shape so the form can show per-field messages
+  (decision 2, resolved - see "Resolved decisions").
+  Verified by: unit test asserting `fields` is present and keyed by the
+  failing field name.
 - **REQ-BFF-3**: A downstream platform-API failure (timeout, 500, network
   error) results in a `5xx` from the BFF with the mapped shape from
   REQ-BFF-2, never an unhandled exception or a `200` with an error message
   in the body.
   Verified by: unit test with the platform API mocked to fail.
 
-## Open decisions (TODO(eduardo))
+## Resolved decisions
 
-These three are intentionally left unimplemented (stubbed so the rest of
-the app compiles and runs). Each stub will make its associated test above
-fail until you implement it - that's expected, not a bug.
+These three were originally stubbed as open product/UX decisions, each
+with a documented trade-off, for a human to resolve. They have since been
+resolved (2026-09-30); this records what was chosen and why, so the
+reasoning survives even though the trade-off framing is no longer live in
+the code.
 
-1. **Focus management after create-submit** (REQ-CREATE-5). Trade-off:
-   focusing the new request's heading is the more standard SPA pattern and
-   confirms "something happened and here it is," but focusing back on the
-   form (e.g. a confirmation message before the input) keeps the user in
-   place if they're about to create several requests in a row. Neither is
-   free from a screen-reader-announcement standpoint - decide which
-   matters more for this workflow.
+1. **Focus management after create-submit** (REQ-CREATE-5). Chosen:
+   navigate to the new request's own page rather than back to the form,
+   and its heading now includes the requester's name (`Travel request:
+   Jamie Lee`, not just `Travel request details`). Reasoning: "something
+   happened and here it is" needed to be concrete enough to verify - a
+   generic landing technically moves focus but doesn't confirm *which*
+   request was created, which was the actual gap this decision existed to
+   close. The rapid-multi-create case (staying on the form) was judged
+   less important than confirmation for a low-volume approvals workflow.
 
-2. **BFF error-mapping shape** (REQ-BFF-2). Trade-off: a flat
-   `{ error: string }` is simplest to render but throws away which field
-   failed validation, forcing the form to show one generic error instead of
-   per-field ones; a structured `{ error: string, fields?: Record<string,
-   string> }` supports per-field messages (needed for REQ-CREATE-2) but is
-   more mapping code and another shape to keep in sync with the zod schema.
+2. **BFF error-mapping shape** (REQ-BFF-2). Chosen: structured
+   `{ error: string, fields?: Record<string, string> }`. Reasoning: a flat
+   message would have meant the BFF's own zod validation (the
+   authoritative check, per REQ-BFF-1) could never actually reach the user
+   as a field-level error - only client-side validation could, making the
+   server-side check purely defensive and functionally invisible. The
+   extra mapping code is worth it specifically because it makes REQ-CREATE-2
+   (per-field errors) genuinely hold for server-side failures too, not
+   only for the client-side checks that usually catch things first.
 
-3. **Empty-state copy and behaviour** (REQ-STATE-2). Trade-off: a plain
-   "No travel requests yet" is honest and low-effort; adding a "Create your
-   first request" call-to-action is more helpful but starts making UX
-   decisions (should it link straight into the form? pre-fill anything?)
-   that go beyond just reporting state.
+3. **Empty-state copy and behaviour** (REQ-STATE-2). Chosen: add a "Create
+   your first request" call-to-action linking to `/requests/new`, not a
+   plain message. Reasoning: this app's only real action from an empty
+   list is "create one" - a dead-end message costs the user an extra trip
+   to the nav bar for no reason, and the CTA's target and copy are
+   unambiguous enough that this didn't turn into an open-ended UX
+   exploration the way a richer empty state (illustrations, tips) might
+   have.

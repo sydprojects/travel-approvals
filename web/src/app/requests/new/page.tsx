@@ -11,14 +11,14 @@ export default function NewRequestPage() {
     <>
       <AutoFocusHeading level={1}>New travel request</AutoFocusHeading>
       <CreateRequestForm
-        onCreated={() => {
-          // TODO(eduardo) - decision 1 (docs/requirements.md, REQ-CREATE-5):
-          // navigating home is a placeholder so the flow is usable end to
-          // end. It does not confirm which request was just created, and
-          // no focus target has been deliberately chosen for this specific
-          // step - the generic route-focus in AutoFocusHeading will land on
-          // the home page's heading, not on anything referencing this item.
-          router.push("/");
+        onCreated={(item) => {
+          // Decision 1 (REQ-CREATE-5) resolved: navigate to the new
+          // request's own page rather than home. Its heading includes the
+          // requester's name (see requests/[id]/page.tsx), so the
+          // route-change focus in AutoFocusHeading lands somewhere that
+          // concretely confirms *this* request was created, not just "a
+          // list that now has one more item somewhere in it."
+          router.push(`/requests/${item.id}`);
         }}
       />
     </>

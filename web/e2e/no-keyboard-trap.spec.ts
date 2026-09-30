@@ -55,7 +55,7 @@ test.describe("REQ-A11Y-2: no keyboard trap", () => {
   for (const { path, heading } of [
     { path: "/", heading: "Travel Approvals" },
     { path: "/requests/new", heading: "New travel request" },
-    { path: "/requests/1", heading: "Travel request details" },
+    { path: "/requests/1", heading: "Travel request: Ana Torres" },
   ]) {
     test(`Tab keeps moving and Shift+Tab can move backward on ${path}`, async ({ page }) => {
       await page.goto(path);

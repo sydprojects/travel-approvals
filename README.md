@@ -96,24 +96,26 @@ Target: WCAG 2.2 AA. Checked with tooling, not assumed:
 - Async outcomes (create, approve, reject) are announced through an
   `aria-live="polite"` region.
 
-## The three open decisions
+## The three decisions (resolved)
 
 Per the project's brief, three product/UX decisions were deliberately left
-for a human to make, not decided by the agent. Each is stubbed so the app
-compiles and runs, marked `TODO(eduardo)` in the code, and documented with
-its trade-off in `docs/requirements.md`. Each has a test that fails until
-it's resolved:
+stubbed rather than decided by the agent, each with a documented trade-off
+in `docs/requirements.md`. They were later explicitly handed back to the
+agent to resolve (2026-09-30). Full reasoning for each is in
+`docs/requirements.md` under "Resolved decisions"; summary:
 
-1. **Focus management after create-submit** - `web/src/app/requests/new/page.tsx`.
-   Currently just navigates home; doesn't confirm which request was created
-   or decide where focus should land specifically. A soft assertion in
-   `web/e2e/keyboard-flow.spec.ts` documents this and fails on purpose.
-2. **BFF error-mapping shape** - `web/src/lib/mapError.ts`. Currently a flat
-   `{ error: string }`, losing which field failed validation. A unit test in
-   `web/src/app/api/requests/route.test.ts` (`REQ-BFF-2`) expects a
-   structured `{ error, fields }` shape and fails until implemented.
-3. **Empty-state copy/behavior** - `web/src/components/TravelRequestList.tsx`.
-   Currently a plain "No travel requests yet." with no call-to-action.
+1. **Focus management after create-submit** - resolved: navigate to the
+   new request's own page, whose heading names the requester, so focus
+   lands somewhere that confirms *which* request was created
+   (`web/src/app/requests/new/page.tsx`, `web/src/app/requests/[id]/page.tsx`).
+2. **BFF error-mapping shape** - resolved: structured `{ error, fields }`
+   (`web/src/lib/mapError.ts`), so the BFF's own server-side validation can
+   surface real per-field errors, not just duplicate client-side checks.
+3. **Empty-state copy/behavior** - resolved: added a "Create your first
+   request" call-to-action (`web/src/components/TravelRequestList.tsx`).
+
+All 26 requirements now map to a passing test - no stubbed failures
+remain.
 
 ## How this was built
 
@@ -176,6 +178,14 @@ happened:
    reviewed its diff, then applied it here after verifying it passed).
    That detour is the honest record of what "delegating to an agent"
    costs in practice, not a smoothed-over "and then Codex wrote it."
+10. Pushed to GitHub and let real CI run before touching the three stubbed
+    decisions. It failed, correctly, on exactly the one intentionally
+    failing test (`REQ-BFF-2`) - confirmed from GitHub's API, not assumed.
+    Only after seeing that real, expected red did the three decisions get
+    resolved (this section's own trade-offs, and `docs/requirements.md`'s
+    "Resolved decisions", record the reasoning), each with its tests
+    updated to assert the resolved behavior rather than the stub. Full
+    suite is green locally; next push settles whether it's green on CI.
 
 No invented users, metrics, or production claims. This has not been
 deployed anywhere; "verified" above means run and checked in this

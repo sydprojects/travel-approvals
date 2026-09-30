@@ -2,22 +2,27 @@ import type { ZodError } from "zod";
 
 export type MappedError = {
   status: number;
-  body: { error: string };
+  body: { error: string; fields?: Record<string, string> };
 };
 
 /**
- * TODO(eduardo) - decision 2 (see docs/requirements.md, REQ-BFF-2).
- *
- * This is a deliberately minimal stub: it collapses every validation error
- * into one flat message and loses which field failed. It compiles and the
- * app runs, but any test asserting a structured `{ error, fields }' shape
- * (so the form can show per-field messages, REQ-CREATE-2) will fail until
- * you pick a shape and implement it here.
+ * Decision 2 (docs/requirements.md, REQ-BFF-2), resolved: structured
+ * { error, fields } over a flat message. The extra mapping code is worth
+ * it because it lets the BFF's own zod validation (the authoritative
+ * check, per REQ-BFF-1) surface a real per-field message to the form
+ * (REQ-CREATE-2), not just duplicate what client-side validation already
+ * caught - this is what makes server-side validation errors actually
+ * visible to the user instead of only existing to protect the API.
  */
 export function mapValidationError(error: ZodError): MappedError {
+  const fields: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.join(".") || "_root";
+    if (!(key in fields)) fields[key] = issue.message;
+  }
   return {
     status: 400,
-    body: { error: error.issues[0]?.message ?? "Invalid input." },
+    body: { error: "Validation failed. Please check the highlighted fields.", fields },
   };
 }
 
