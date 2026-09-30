@@ -143,7 +143,9 @@ distinct, correct content.
   pass (`web/e2e/axe.spec.ts`).
 - **REQ-A11Y-2**: Every interactive element is reachable by keyboard alone,
   in a logical tab order, with no keyboard trap.
-  Verified by: Playwright keyboard-only e2e covering create -> approve.
+  Verified by: Playwright keyboard-only e2e covering create -> approve
+  (`web/e2e/keyboard-flow.spec.ts`), plus a dedicated no-trap check on
+  every page tabbing forward and back (`web/e2e/no-keyboard-trap.spec.ts`).
 - **REQ-A11Y-3**: Every focusable element has a visible focus indicator
   (not `outline: none` without a replacement).
   Verified by: Playwright e2e checking computed `outline`/`box-shadow`
