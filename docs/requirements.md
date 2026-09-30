@@ -123,6 +123,16 @@ alike:
 Verified by: component test per view, asserting each state renders
 distinct, correct content.
 
+## Cross-cutting: responsiveness
+
+- **REQ-RESPONSIVE-1**: Every page renders with no horizontal overflow at
+  a common phone width (375px), and the create form's side-by-side
+  start/end date inputs stack to one column below 480px rather than
+  squeezing two native date inputs into an unusably narrow track.
+  Verified by: Playwright e2e checking `scrollWidth <= clientWidth` and
+  the date row's computed `grid-template-columns` at a 375px viewport
+  (`web/e2e/responsive.spec.ts`).
+
 ## Cross-cutting: accessibility (WCAG 2.2 AA target)
 
 - **REQ-A11Y-1**: Every page has semantic landmarks (`header`, `main`,

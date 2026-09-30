@@ -66,6 +66,13 @@ cd web && npm run e2e                     # Playwright, incl. @axe-core/playwrig
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, build, and
 the full e2e/axe suite on every push.
 
+## Responsive
+
+Checked with Playwright at a 375px phone viewport across every page: no
+horizontal overflow, and the create form's date-input row stacks to one
+column below 480px instead of squeezing two native date pickers into an
+unusably narrow track (`web/e2e/responsive.spec.ts`).
+
 ## Accessibility
 
 Target: WCAG 2.2 AA. Checked with tooling, not assumed:

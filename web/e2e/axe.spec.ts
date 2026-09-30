@@ -13,8 +13,13 @@ import AxeBuilder from "@axe-core/playwright";
  */
 async function expectOneH1AndLandmarks(page: import("@playwright/test").Page) {
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.locator("header")).toHaveCount(1);
-  await expect(page.locator("main")).toHaveCount(1);
+  // By role, not tag: the detail page's <article> has its own <header> for
+  // the requester-name row, which is valid HTML5 but is NOT a "banner"
+  // landmark (a <header> only gets that role when it isn't nested inside
+  // article/aside/main/nav/section) - counting raw <header> tags would
+  // wrongly flag that as a second landmark.
+  await expect(page.getByRole("banner")).toHaveCount(1);
+  await expect(page.getByRole("main")).toHaveCount(1);
 }
 
 test.describe("REQ-A11Y-7: zero axe violations per page", () => {
