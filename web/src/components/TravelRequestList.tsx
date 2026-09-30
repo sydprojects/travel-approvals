@@ -24,6 +24,9 @@ export function TravelRequestList({ items }: Props) {
       <h2 id="travel-requests-heading">Travel requests</h2>
 
       {items.length === 0 ? (
+        // TODO(eduardo) - decision 3 (see docs/requirements.md, REQ-STATE-2):
+        // plain message vs. adding a "Create your first request" CTA is left
+        // undecided. This is the low-effort default, not a final choice.
         <p className={styles.empty}>No travel requests yet.</p>
       ) : (
         <ul className={styles.list}>
