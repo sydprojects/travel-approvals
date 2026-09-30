@@ -51,8 +51,14 @@ describe("TravelRequestList", () => {
     expect(screen.getByText(/no travel requests/i)).toBeInTheDocument();
   });
 
-  it("has no axe violations", async () => {
+  it("has no axe violations (populated)", async () => {
     const { container } = render(<TravelRequestList items={items} />);
+    const results = await axe(container);
+    expect(results.violations).toEqual([]);
+  });
+
+  it("REQ-A11Y-7: has no axe violations (empty state)", async () => {
+    const { container } = render(<TravelRequestList items={[]} />);
     const results = await axe(container);
     expect(results.violations).toEqual([]);
   });
