@@ -46,9 +46,13 @@ describe("TravelRequestList", () => {
     expect(screen.getByRole("heading", { level: 2, name: /travel requests/i })).toBeInTheDocument();
   });
 
-  it("REQ-STATE-2: shows a distinct empty state for zero items", () => {
+  it("REQ-STATE-2: shows a distinct empty state for zero items, with a create CTA", () => {
     render(<TravelRequestList items={[]} />);
     expect(screen.getByText(/no travel requests/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /create your first request/i })).toHaveAttribute(
+      "href",
+      "/requests/new"
+    );
   });
 
   it("has no axe violations (populated)", async () => {

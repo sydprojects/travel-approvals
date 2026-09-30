@@ -12,7 +12,9 @@ export default async function RequestDetailPage({ params }: Props) {
 
   return (
     <>
-      <AutoFocusHeading level={1}>Travel request details</AutoFocusHeading>
+      <AutoFocusHeading level={1}>
+        {result.ok ? `Travel request: ${result.data.requesterName}` : "Travel request details"}
+      </AutoFocusHeading>
       <TravelRequestDetail item={result.ok ? result.data : null} />
     </>
   );

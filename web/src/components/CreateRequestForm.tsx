@@ -72,14 +72,21 @@ export function CreateRequestForm({ onCreated }: Props) {
       });
       const body = await res.json();
       if (!res.ok) {
+        // Merge server-returned per-field errors (REQ-BFF-2) on top of
+        // whatever client-side validation already found - this is what
+        // makes the BFF's own zod validation actually visible to the user
+        // instead of only existing to protect the API.
+        if (body?.fields) {
+          setErrors((prev) => ({ ...prev, ...body.fields }));
+        }
         setStatus(body?.error || "Could not create the request.");
         return;
       }
       setStatus(`Request created for ${body.requesterName}.`);
-      // TODO(eduardo) - decision 1 (see docs/requirements.md, REQ-CREATE-5):
-      // what happens next (focus target, whether the form resets) is not
-      // decided here on purpose. onCreated() just hands the new item up;
-      // the caller currently does nothing further with focus.
+      // Decision 1 (REQ-CREATE-5) resolved: the caller navigates to the
+      // new request's own page, not home, so focus lands on a heading
+      // that confirms *this* request specifically (see requests/new/page
+      // and requests/[id]/page).
       onCreated(body);
     } catch {
       setStatus("Network error. Please try again.");

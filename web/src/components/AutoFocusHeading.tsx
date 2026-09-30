@@ -20,9 +20,10 @@ let hasNavigatedOnce = false;
  * hydration is still settling) can override a user who started
  * interacting immediately, which is exactly what happened here: an
  * earlier version fired unconditionally and hijacked focus mid-keyboard-
- * navigation in the Playwright e2e run. Separate from the TODO(eduardo)
- * decision 1 stub, which is specifically about what happens right after
- * create-submit.
+ * navigation in the Playwright e2e run. This general rule is separate
+ * from decision 1 (REQ-CREATE-5, now resolved): that one is specifically
+ * about which page to land on after create-submit, not about this
+ * mechanism itself.
  */
 export function AutoFocusHeading({ children, level = 1 }: Props) {
   const ref = useRef<HTMLHeadingElement>(null);

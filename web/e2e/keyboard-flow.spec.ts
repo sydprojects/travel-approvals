@@ -25,21 +25,6 @@ async function tabAwayFrom(page: Page, maxTabs = 5) {
 }
 
 /**
- * Tabs (bounded) until the focused element's own text matches, rather than
- * assuming a fixed tab count - how many tabs it takes depends on whether
- * focus starts at the header or already at an auto-focused in-page
- * heading (see AutoFocusHeading), which varies by navigation path.
- */
-async function tabUntilTextMatches(page: Page, pattern: RegExp, maxTabs = 8) {
-  for (let i = 0; i < maxTabs; i++) {
-    await page.keyboard.press("Tab");
-    const text = await page.evaluate(() => document.activeElement?.textContent ?? "");
-    if (pattern.test(text)) return;
-  }
-  throw new Error(`No focused element matched ${pattern} within ${maxTabs} tabs`);
-}
-
-/**
  * Waits for AutoFocusHeading's effect to actually land focus on the page's
  * h1 before we start tabbing relative to it. Without this, tabAwayFrom can
  * mark <body> (if the effect hasn't run yet) instead of the heading,
@@ -85,26 +70,15 @@ test("keyboard-only: create a request, then approve it (REQ-A11Y-2)", async ({ p
   await expect(page.getByRole("button", { name: /submit/i })).toBeFocused();
   await page.keyboard.press("Enter");
 
-  await expect(page).toHaveURL("/");
-  await waitForHeadingFocus(page);
-
-  // TODO(eduardo) - decision 1 (docs/requirements.md, REQ-CREATE-5) is not
-  // implemented: the stub navigates home with only generic route focus, so
-  // focus lands on the home page's own heading, not on anything confirming
-  // *this* request. This soft assertion documents that gap without blocking
-  // the rest of the flow below (create -> approve) from being verified.
-  const activeElementText = await page.evaluate(() => document.activeElement?.textContent ?? "");
-  expect.soft(activeElementText).toMatch(/jamie lee/i);
-
-  // Continue keyboard-only: the new request sorts first (newest-first);
-  // open it and approve it, still without touching the mouse. Starting
-  // from the already-focused home heading, one tab reaches the first item.
-  await tabUntilTextMatches(page, /jamie lee/i);
-  await expect(page.getByRole("link").filter({ hasText: "Jamie Lee" })).toBeFocused();
-  await page.keyboard.press("Enter");
+  // Decision 1 (REQ-CREATE-5) resolved: create navigates to the new
+  // request's own page, and its heading names the requester, so focus
+  // lands somewhere that concretely confirms *this* request was created.
   await expect(page).toHaveURL(/\/requests\/\d+/);
   await waitForHeadingFocus(page);
+  const activeElementText = await page.evaluate(() => document.activeElement?.textContent ?? "");
+  expect(activeElementText).toMatch(/jamie lee/i);
 
+  // Continue keyboard-only, still on the same page: approve it.
   await tabAwayFrom(page); // -> Approve button
   await expect(page.getByRole("button", { name: /approve/i })).toBeFocused();
   await page.keyboard.press("Enter");

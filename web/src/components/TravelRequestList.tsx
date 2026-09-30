@@ -24,10 +24,13 @@ export function TravelRequestList({ items }: Props) {
       <h2 id="travel-requests-heading">Travel requests</h2>
 
       {items.length === 0 ? (
-        // TODO(eduardo) - decision 3 (see docs/requirements.md, REQ-STATE-2):
-        // plain message vs. adding a "Create your first request" CTA is left
-        // undecided. This is the low-effort default, not a final choice.
-        <p className={styles.empty}>No travel requests yet.</p>
+        // Decision 3 (REQ-STATE-2) resolved: a CTA over a plain message.
+        // It's worth the small extra UX surface here because "no requests
+        // yet" on a page whose only real action is "create one" reads as
+        // a dead end otherwise, not a landing page in normal working use.
+        <p className={styles.empty}>
+          No travel requests yet. <Link href="/requests/new">Create your first request</Link>.
+        </p>
       ) : (
         <ul className={styles.list}>
           {items.map((item) => (
