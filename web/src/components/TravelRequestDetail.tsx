@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BASE_PATH } from "@/lib/basePath";
 import type { TravelRequest, TravelRequestStatus } from "@/lib/types";
 import styles from "./TravelRequestDetail.module.css";
 
@@ -36,7 +37,7 @@ export function TravelRequestDetail({ item: initialItem, onDecided }: Props) {
     setDeciding(true);
     setStatus("");
     try {
-      const res = await fetch(`/api/requests/${item!.id}`, {
+      const res = await fetch(`${BASE_PATH}/api/requests/${item!.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),

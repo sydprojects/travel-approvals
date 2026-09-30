@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
+import { BASE_PATH } from "@/lib/basePath";
 import type { TravelRequest } from "@/lib/types";
 import styles from "./CreateRequestForm.module.css";
 
@@ -65,7 +66,7 @@ export function CreateRequestForm({ onCreated }: Props) {
     setSubmitting(true);
     setStatus("");
     try {
-      const res = await fetch("/api/requests", {
+      const res = await fetch(`${BASE_PATH}/api/requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
