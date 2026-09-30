@@ -107,6 +107,7 @@ alike:
 
 - **REQ-STATE-1** (loading): a visible loading indicator while the request
   is in flight, not a blank screen.
+  Verified by: component test on each route's `loading.tsx`.
 - **REQ-STATE-2** (empty): a distinct "no data" message when a successful
   response contains zero items - not indistinguishable from the loading or
   error state. The exact empty-state copy and whether it offers a
@@ -115,6 +116,9 @@ alike:
 - **REQ-STATE-3** (error): a distinct, human-readable error message on
   failure, with no leaked stack traces or raw server error bodies.
 - **REQ-STATE-4** (success): the normal populated view.
+  Verified by: no dedicated test of its own - exercised as the baseline
+  render in nearly every other component and e2e test (e.g. the axe suite
+  navigates each page in its normal populated state).
 
 Verified by: component test per view, asserting each state renders
 distinct, correct content.
@@ -124,13 +128,17 @@ distinct, correct content.
 - **REQ-A11Y-1**: Every page has semantic landmarks (`header`, `main`,
   `nav` if applicable) and exactly one `h1`, with no skipped heading
   levels.
-  Verified by: jest-axe (landmark/heading rules) on every page.
+  Verified by: Playwright e2e asserting exactly one `h1`/`header`/`main`
+  per page, plus axe's landmark/region/heading-order rules in the same
+  pass (`web/e2e/axe.spec.ts`).
 - **REQ-A11Y-2**: Every interactive element is reachable by keyboard alone,
   in a logical tab order, with no keyboard trap.
   Verified by: Playwright keyboard-only e2e covering create -> approve.
 - **REQ-A11Y-3**: Every focusable element has a visible focus indicator
   (not `outline: none` without a replacement).
-  Verified by: manual check + Playwright screenshot diff on `:focus`.
+  Verified by: Playwright e2e checking computed `outline`/`box-shadow`
+  after keyboard focus on real controls, not visual inspection
+  (`web/e2e/focus-visible.spec.ts`).
 - **REQ-A11Y-4**: Focus moves deliberately after a route change (to the new
   page's `h1` or main landmark) so keyboard/screen-reader users aren't left
   on a focus target that no longer exists.
@@ -145,8 +153,9 @@ distinct, correct content.
   contrast (4.5:1 normal text, 3:1 large text/UI components) - checked with
   a contrast tool against the actual chosen palette, not assumed from
   "looks dark enough."
-  Verified by: axe (`color-contrast` rule) + one manual spot check per
-  color pairing used.
+  Verified by: axe's `color-contrast` rule in e2e, plus every color
+  pairing actually used in the app checked with a WCAG contrast formula
+  (all 12 pairings pass at 4.5:1; see the PR/commit for the full table).
 - **REQ-A11Y-7**: `@axe-core/playwright` reports zero violations on every
   page (list, detail, create, and the empty/error/loading variants where
   feasible to trigger in e2e).
