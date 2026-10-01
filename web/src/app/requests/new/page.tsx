@@ -18,7 +18,7 @@ export default function NewRequestPage() {
           // route-change focus in AutoFocusHeading lands somewhere that
           // concretely confirms *this* request was created, not just "a
           // list that now has one more item somewhere in it."
-          router.push(`/requests/${item.id}`);
+          router.push(`/requests/${item.id}?created=1`);
         }}
       />
     </>

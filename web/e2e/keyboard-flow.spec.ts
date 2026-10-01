@@ -78,6 +78,11 @@ test("keyboard-only: create a request, then approve it (REQ-A11Y-2)", async ({ p
   const activeElementText = await page.evaluate(() => document.activeElement?.textContent ?? "");
   expect(activeElementText).toMatch(/jamie lee/i);
 
+  // The status region announces the create, then the ?created=1 query
+  // param is stripped via router.replace so a refresh doesn't repeat it.
+  await expect(page.locator('[role="status"]')).toHaveText("Request created.");
+  await expect(page).not.toHaveURL(/created=1/);
+
   // Continue keyboard-only, still on the same page: approve it.
   await tabAwayFrom(page); // -> Approve button
   await expect(page.getByRole("button", { name: /approve/i })).toBeFocused();

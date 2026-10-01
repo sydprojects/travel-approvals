@@ -5,6 +5,12 @@ import { axe } from "jest-axe";
 import { TravelRequestDetail } from "./TravelRequestDetail";
 import type { TravelRequest } from "@/lib/types";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/requests/1",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const pending: TravelRequest = {
   id: 1,
   requesterName: "Ana Torres",

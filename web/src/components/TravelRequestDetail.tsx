@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BASE_PATH } from "@/lib/basePath";
 import type { TravelRequest, TravelRequestStatus } from "@/lib/types";
 import styles from "./TravelRequestDetail.module.css";
@@ -24,6 +25,27 @@ export function TravelRequestDetail({ item: initialItem, onDecided }: Props) {
   const [item, setItem] = useState(initialItem);
   const [deciding, setDeciding] = useState(false);
   const [status, setStatus] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // REQ-CREATE-5: a persistent role="status" region, empty on first
+    // paint. If we arrived via create's ?created=1, announce it, then
+    // strip the param with replace so a refresh doesn't repeat the
+    // announcement. Deliberately a one-shot effect (mount only): re-firing
+    // on every searchParams change would announce "Request created." again
+    // after the replace re-triggers this effect if created were a dep.
+    // This genuinely needs to run as an effect, not during render: it
+    // synchronizes with the URL (an external source) and also performs a
+    // real side effect (router.replace) as a result.
+    if (searchParams.get("created") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStatus("Request created.");
+      router.replace(pathname, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!item) {
     return (
@@ -92,7 +114,7 @@ export function TravelRequestDetail({ item: initialItem, onDecided }: Props) {
         </div>
       )}
 
-      <p aria-live="polite" className={styles.liveStatus}>
+      <p role="status" aria-live="polite" className={styles.liveStatus}>
         {status}
       </p>
     </article>

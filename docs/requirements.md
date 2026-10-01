@@ -77,11 +77,21 @@ Validation rules (enforced by the BFF, not trusted from the client):
   both success and failure - never left permanently disabled after an
   error.
   Verified by: component test.
-- **REQ-CREATE-5**: After a successful create, navigate to the new
-  request's own page, whose heading names the requester, so keyboard and
+- **REQ-CREATE-5**: After a successful create, navigate to
+  `/requests/{id}?created=1`. The destination page has a persistent
+  `role="status"` region, empty on first paint; on mount, if `created=1`,
+  it announces "Request created." and the query param is stripped via
+  `router.replace` so a refresh does not repeat the announcement. Focus
+  lands on the page's `h1`, which names the requester, so keyboard and
   screen-reader users land somewhere that concretely confirms which
   request was created (decision 1, resolved - see "Resolved decisions").
-  Verified by: Playwright e2e asserting the focused heading's text after
+  On an invalid submit (client-side or server-returned field errors),
+  focus moves to the first invalid field in visual order (requesterName,
+  destination, startDate, endDate, reason); the aria-live summary message
+  is kept alongside it.
+  Verified by: component tests asserting focus-to-first-invalid for both
+  client and server errors (`web/src/components/CreateRequestForm.test.tsx`);
+  e2e asserting the focused `h1` text and the status region's text after
   create-submit (`web/e2e/keyboard-flow.spec.ts`).
 
 ## Feature: Approve / reject travel request
