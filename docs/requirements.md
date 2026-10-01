@@ -32,8 +32,8 @@ Validation rules (enforced by the BFF, not trusted from the client):
 - `reason`: non-empty, 10-500 characters after trimming.
 - `startDate`, `endDate`: valid ISO dates; `startDate <= endDate`.
 - `status`: one of the three values above; only `pending -> approved` and
-  `pending -> approved | rejected` are legal transitions. `approved` and
-  `rejected` are terminal - no further transition is accepted.
+  `pending -> rejected` are legal transitions. `approved` and `rejected`
+  are terminal - no further transition is accepted.
 
 ## Feature: List travel requests
 
