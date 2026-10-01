@@ -39,23 +39,23 @@ Validation rules (enforced by the BFF, not trusted from the client):
 
 - **REQ-LIST-1**: Visiting the requests page shows every travel request,
   most recently created first.
-  Verified by: component test (Testing Library) + e2e.
+  Verified by: `web/src/components/TravelRequestList.test.tsx` + `web/e2e/axe.spec.ts`.
 - **REQ-LIST-2**: Each row shows requester, destination, dates, and status,
   with status visually distinguished by more than color alone (e.g. an
   icon or text label), not color alone.
-  Verified by: component test + manual contrast/axe check.
+  Verified by: `web/src/components/TravelRequestList.test.tsx` + axe's `color-contrast` rule in `web/e2e/axe.spec.ts`.
 - **REQ-LIST-3**: The requests list is reachable as a landmark region with
   a heading, in the page's normal heading order (no skipped levels).
-  Verified by: jest-axe + manual heading-order check.
+  Verified by: `web/src/components/TravelRequestList.test.tsx` (jest-axe) + `web/e2e/axe.spec.ts` (heading order).
 
 ## Feature: View one travel request
 
 - **REQ-VIEW-1**: Navigating to a request's detail page shows all of its
   fields, including `decisionNote` when present.
-  Verified by: component test.
+  Verified by: `web/src/components/TravelRequestDetail.test.tsx`.
 - **REQ-VIEW-2**: Requesting a nonexistent id shows a clear "not found"
   state, not a blank page or an unhandled crash.
-  Verified by: component test (mocked 404 from BFF).
+  Verified by: `web/src/components/TravelRequestDetail.test.tsx` (mocked 404 from BFF).
 
 ## Feature: Create travel request
 
@@ -63,20 +63,20 @@ Validation rules (enforced by the BFF, not trusted from the client):
   (`requesterName`, `destination`, `startDate`, `endDate`, `reason`); every
   input's accessible name comes from a real `<label>`, not placeholder text
   alone.
-  Verified by: jest-axe + component test querying by accessible role/name.
+  Verified by: `web/src/components/CreateRequestForm.test.tsx` (jest-axe + accessible role/name queries).
 - **REQ-CREATE-2**: Submitting with any field invalid shows a specific,
   field-level error message, and that error is linked to its input via
   `aria-describedby` so screen readers announce it when the input is
   focused.
-  Verified by: component test asserting the `aria-describedby` wiring.
+  Verified by: `web/src/components/CreateRequestForm.test.tsx` (asserts the `aria-describedby` wiring).
 - **REQ-CREATE-3**: Submitting a fully valid form creates the request with
   `status: "pending"` and navigates to (or shows) the new request.
-  Verified by: e2e.
+  Verified by: `web/src/app/api/requests/route.test.ts` + `web/e2e/keyboard-flow.spec.ts`.
 - **REQ-CREATE-4**: The submit button is disabled and labelled as busy
   (e.g. "Submitting…") while the request is in flight, and re-enabled on
   both success and failure - never left permanently disabled after an
   error.
-  Verified by: component test.
+  Verified by: `web/src/components/CreateRequestForm.test.tsx`.
 - **REQ-CREATE-5**: After a successful create, navigate to
   `/requests/{id}?created=1`. The destination page has a persistent
   `role="status"` region, empty on first paint; on mount, if `created=1`,
@@ -100,16 +100,16 @@ Validation rules (enforced by the BFF, not trusted from the client):
   "Reject" control; `approved`/`rejected` requests expose neither (the
   terminal-state rule from the domain model is visible in the UI, not just
   enforced server-side).
-  Verified by: component test.
+  Verified by: `web/src/components/TravelRequestDetail.test.tsx`.
 - **REQ-APPROVE-2**: Both controls are operable with keyboard alone (Tab to
   reach, Enter/Space to activate), with a visible focus indicator at every
   step.
-  Verified by: Playwright keyboard-only e2e.
+  Verified by: `web/e2e/keyboard-flow.spec.ts`.
 - **REQ-APPROVE-3**: After approving or rejecting, the status update is
   reflected in the UI without a full page reload, and is announced via the
   `aria-live` region (REQ-A11Y-5) so a screen reader user learns the
   outcome without having to re-read the page.
-  Verified by: component test + manual screen-reader spot check.
+  Verified by: `web/src/components/TravelRequestDetail.test.tsx` + `web/e2e/keyboard-flow.spec.ts` (aria-live text asserted in a real browser).
 
 ## Cross-cutting: async states
 
@@ -124,8 +124,7 @@ alike:
   response contains zero items - not indistinguishable from the loading or
   error state - including a "Create your first request" call-to-action
   (decision 3, resolved - see "Resolved decisions").
-  Verified by: component test asserting the message and the CTA link's
-  `href`.
+  Verified by: `web/src/components/TravelRequestList.test.tsx` (asserts the message and the CTA link's `href`).
 - **REQ-STATE-3** (error): a distinct, human-readable error message on
   failure, with no leaked stack traces or raw server error bodies.
 - **REQ-STATE-4** (success): the normal populated view.
@@ -167,13 +166,11 @@ distinct, correct content.
 - **REQ-A11Y-4**: Focus moves deliberately after a route change (to the new
   page's `h1` or main landmark) so keyboard/screen-reader users aren't left
   on a focus target that no longer exists.
-  Verified by: component/e2e test asserting `document.activeElement` after
-  navigation.
+  Verified by: `web/e2e/keyboard-flow.spec.ts` and `web/e2e/no-keyboard-trap.spec.ts` (both assert `document.activeElement` after navigation).
 - **REQ-A11Y-5**: An `aria-live="polite"` region announces the result of
   async actions (create succeeded/failed, approve/reject succeeded/failed)
   without moving visual focus away from where the user was.
-  Verified by: component test asserting the live region's text content
-  updates.
+  Verified by: `web/src/components/CreateRequestForm.test.tsx` and `web/src/components/TravelRequestDetail.test.tsx` (assert the live region's text content updates).
 - **REQ-A11Y-6**: Text and meaningful UI components meet WCAG 2.2 AA
   contrast (4.5:1 normal text, 3:1 large text/UI components) - checked with
   a contrast tool against the actual chosen palette, not assumed from
@@ -184,14 +181,15 @@ distinct, correct content.
 - **REQ-A11Y-7**: `@axe-core/playwright` reports zero violations on every
   page (list, detail, create, and the empty/error/loading variants where
   feasible to trigger in e2e).
-  Verified by: Playwright + axe integration, one spec per page.
+  Verified by: `web/e2e/axe.spec.ts` (one spec per page), plus
+  `web/src/components/TravelRequestList.test.tsx` (jest-axe, empty state).
 
 ## Cross-cutting: BFF contract
 
 - **REQ-BFF-1**: Every BFF route handler validates its input with a zod
   schema before calling the platform API; invalid input never reaches the
   downstream service.
-  Verified by: unit test per route handler (valid + invalid payloads).
+  Verified by: `web/src/app/api/requests/route.test.ts` + `web/src/app/api/requests/[id]/route.test.ts` (valid + invalid payloads).
 - **REQ-BFF-2**: The BFF never forwards the platform API's raw error body
   or stack trace to the browser. Validation failures return a structured
   `{ error, fields }` shape so the form can show per-field messages
