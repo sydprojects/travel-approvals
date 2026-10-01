@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { MESSAGES } from "@/lib/messages";
 
 vi.mock("@/lib/platformApi", () => ({
   listRequests: vi.fn(),
@@ -60,6 +61,12 @@ describe("POST /api/requests", () => {
     const res = await POST(postRequest({ requesterName: "A" }));
     expect(res.status).toBe(400);
     expect(createRequest).not.toHaveBeenCalled();
+  });
+
+  it("uses lib/messages.ts copy, not zod's default text, so server and client errors read identically", async () => {
+    const res = await POST(postRequest({ requesterName: "A" }));
+    const json = await res.json();
+    expect(json.fields.requesterName).toBe(MESSAGES.requesterName.required);
   });
 
   it("REQ-CREATE-3: forwards valid input and returns the created request", async () => {

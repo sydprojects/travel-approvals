@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest, { params }: Context) {
   const { id } = await params;
   const result = await getRequest(Number(id));
   if (!result.ok) {
-    const mapped = mapDownstreamError(result.status, result.body);
+    const mapped = mapDownstreamError(result.status);
     return NextResponse.json(mapped.body, { status: mapped.status });
   }
   return NextResponse.json(result.data);
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
 
   const result = await decideRequest(Number(id), parsed.data);
   if (!result.ok) {
-    const mapped = mapDownstreamError(result.status, result.body);
+    const mapped = mapDownstreamError(result.status);
     return NextResponse.json(mapped.body, { status: mapped.status });
   }
   return NextResponse.json(result.data);

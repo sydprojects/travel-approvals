@@ -6,7 +6,7 @@ import { createRequest, listRequests } from "@/lib/platformApi";
 export async function GET() {
   const result = await listRequests();
   if (!result.ok) {
-    const mapped = mapDownstreamError(result.status, result.body);
+    const mapped = mapDownstreamError(result.status);
     return NextResponse.json(mapped.body, { status: mapped.status });
   }
   return NextResponse.json(result.data);
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   const result = await createRequest(parsed.data);
   if (!result.ok) {
-    const mapped = mapDownstreamError(result.status, result.body);
+    const mapped = mapDownstreamError(result.status);
     return NextResponse.json(mapped.body, { status: mapped.status });
   }
   return NextResponse.json(result.data, { status: 201 });

@@ -195,14 +195,41 @@ distinct, correct content.
 - **REQ-BFF-2**: The BFF never forwards the platform API's raw error body
   or stack trace to the browser. Validation failures return a structured
   `{ error, fields }` shape so the form can show per-field messages
-  (decision 2, resolved - see "Resolved decisions").
-  Verified by: unit test asserting `fields` is present and keyed by the
-  failing field name.
+  (decision 2, resolved - see "Resolved decisions"). Downstream failures
+  are mapped to a fixed status and message by `mapDownstreamError(status)`
+  per this table, which takes only a status code, never the downstream
+  body, so a leak is impossible by construction rather than by discipline:
+
+  | Downstream condition | Mapped status | Message |
+  | --- | --- | --- |
+  | 400 | 400 | "Some details could not be accepted." |
+  | 404 | 404 | "Request not found." |
+  | 409 | 409 | "This request has already been decided." |
+  | timeout | 504 | "The service took too long. Please try again." |
+  | network / 5xx / anything else | 502 | "The service is unavailable. Please try again." |
+
+  `mapDownstreamError` is currently a stub that throws
+  (`TODO(eduardo)` in `web/src/lib/mapError.ts`) - implementing this table
+  is the one piece of this requirement left undone on purpose.
+  Verified by: `web/src/lib/mapError.test.ts` (one test per table row,
+  plus a leak-safety invariant), currently failing until the table is
+  implemented. `web/src/app/api/requests/route.test.ts` additionally
+  asserts the exact message text matches `lib/messages.ts`, not zod's
+  default copy.
 - **REQ-BFF-3**: A downstream platform-API failure (timeout, 500, network
   error) results in a `5xx` from the BFF with the mapped shape from
   REQ-BFF-2, never an unhandled exception or a `200` with an error message
-  in the body.
-  Verified by: unit test with the platform API mocked to fail.
+  in the body. `platformApi.ts` distinguishes a stalled request (mapped to
+  504) from an outright network failure (mapped to 502) via
+  `AbortSignal.timeout(PLATFORM_TIMEOUT_MS)` (default 5000ms, configurable
+  via the `PLATFORM_TIMEOUT_MS` env var) before `mapDownstreamError` ever
+  sees the status.
+  Verified by: `web/src/lib/platformApi.test.ts` (timeout path via a
+  fetch mock that only resolves on abort, and a network-failure path);
+  the "never an unhandled exception" half of this requirement currently
+  fails at the route level until `mapDownstreamError`'s table (REQ-BFF-2)
+  is implemented, since every route handler that hits a downstream error
+  calls it.
 
 ## Resolved decisions
 
