@@ -104,4 +104,35 @@ describe("CreateRequestForm", () => {
     const results = await axe(container);
     expect(results.violations).toEqual([]);
   });
+
+  it("REQ-CREATE-5: moves focus to the first invalid field in visual order (client-side errors)", async () => {
+    const user = userEvent.setup();
+    render(<CreateRequestForm onCreated={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /submit/i }));
+
+    await waitFor(() => expect(screen.getByLabelText(/requester/i)).toHaveFocus());
+  });
+
+  it("REQ-CREATE-5: moves focus to the first invalid field from server-returned errors", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        error: "Validation failed. Please check the highlighted fields.",
+        fields: { destination: "Keep the destination to 80 characters or fewer." },
+      }),
+    } as Response);
+
+    const user = userEvent.setup();
+    render(<CreateRequestForm onCreated={() => {}} />);
+
+    await user.type(screen.getByLabelText(/requester/i), "Jamie Lee");
+    await user.type(screen.getByLabelText(/destination/i), "Lima, PE");
+    await user.type(screen.getByLabelText(/start date/i), "2026-12-01");
+    await user.type(screen.getByLabelText(/end date/i), "2026-12-05");
+    await user.type(screen.getByLabelText(/reason/i), "Annual supplier review meeting on site.");
+    await user.click(screen.getByRole("button", { name: /submit/i }));
+
+    await waitFor(() => expect(screen.getByLabelText(/destination/i)).toHaveFocus());
+  });
 });

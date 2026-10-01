@@ -1,11 +1,18 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { BASE_PATH } from "@/lib/basePath";
+import { MESSAGES } from "@/lib/messages";
 import type { TravelRequest } from "@/lib/types";
 import styles from "./CreateRequestForm.module.css";
 
-type FieldErrors = Partial<Record<"requesterName" | "destination" | "startDate" | "endDate" | "reason", string>>;
+type FieldName = "requesterName" | "destination" | "startDate" | "endDate" | "reason";
+type FieldErrors = Partial<Record<FieldName, string>>;
+
+// Visual order, per REQ-CREATE-5: on an invalid submit, focus moves to the
+// first field with an error in this order, not just the first key in
+// whatever object the errors happen to be built in.
+const FIELD_ORDER: FieldName[] = ["requesterName", "destination", "startDate", "endDate", "reason"];
 
 type Props = {
   onCreated: (item: TravelRequest) => void;
@@ -13,18 +20,18 @@ type Props = {
 
 function validate(values: Record<string, string>): FieldErrors {
   const errors: FieldErrors = {};
-  if (values.requesterName.trim().length < 2) errors.requesterName = "Enter the requester's name.";
-  if (values.destination.trim().length < 2) errors.destination = "Enter a destination.";
-  if (!values.startDate || Number.isNaN(Date.parse(values.startDate))) errors.startDate = "Enter a valid start date.";
-  if (!values.endDate || Number.isNaN(Date.parse(values.endDate))) errors.endDate = "Enter a valid end date.";
+  if (values.requesterName.trim().length < 2) errors.requesterName = MESSAGES.requesterName.required;
+  if (values.destination.trim().length < 2) errors.destination = MESSAGES.destination.required;
+  if (!values.startDate || Number.isNaN(Date.parse(values.startDate))) errors.startDate = MESSAGES.startDate.invalid;
+  if (!values.endDate || Number.isNaN(Date.parse(values.endDate))) errors.endDate = MESSAGES.endDate.invalid;
   if (
     !errors.startDate &&
     !errors.endDate &&
     Date.parse(values.startDate) > Date.parse(values.endDate)
   ) {
-    errors.endDate = "End date must be on or after the start date.";
+    errors.endDate = MESSAGES.endDate.beforeStart;
   }
-  if (values.reason.trim().length < 10) errors.reason = "Reason must be at least 10 characters.";
+  if (values.reason.trim().length < 10) errors.reason = MESSAGES.reason.tooShort;
   return errors;
 }
 
@@ -48,6 +55,35 @@ export function CreateRequestForm({ onCreated }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string>("");
 
+  // Individually typed so each ref matches the real element it's attached
+  // to (input vs textarea); only widened to a common HTMLElement lookup
+  // below, since focusFirstError only ever needs .focus().
+  const requesterNameRef = useRef<HTMLInputElement>(null);
+  const destinationRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+
+  const fieldRefs: Record<FieldName, React.RefObject<HTMLElement | null>> = {
+    requesterName: requesterNameRef,
+    destination: destinationRef,
+    startDate: startDateRef,
+    endDate: endDateRef,
+    reason: reasonRef,
+  };
+
+  // REQ-CREATE-5: after errors render, focus moves to the first invalid
+  // field in visual order - works for client-side errors and for
+  // server-returned field errors alike, since both end up in `errors`.
+  function focusFirstError(fieldErrors: FieldErrors) {
+    for (const field of FIELD_ORDER) {
+      if (fieldErrors[field]) {
+        fieldRefs[field].current?.focus();
+        return;
+      }
+    }
+  }
+
   function setField(field: keyof typeof values) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setValues((v) => ({ ...v, [field]: e.target.value }));
@@ -60,6 +96,7 @@ export function CreateRequestForm({ onCreated }: Props) {
 
     if (Object.keys(fieldErrors).length > 0) {
       setStatus("The form has errors. Please review the highlighted fields.");
+      focusFirstError(fieldErrors);
       return;
     }
 
@@ -77,17 +114,21 @@ export function CreateRequestForm({ onCreated }: Props) {
         // whatever client-side validation already found - this is what
         // makes the BFF's own zod validation actually visible to the user
         // instead of only existing to protect the API.
+        const mergedFields: FieldErrors = body?.fields ? { ...errors, ...body.fields } : errors;
         if (body?.fields) {
-          setErrors((prev) => ({ ...prev, ...body.fields }));
+          setErrors(mergedFields);
         }
         setStatus(body?.error || "Could not create the request.");
+        focusFirstError(mergedFields);
         return;
       }
-      setStatus(`Request created for ${body.requesterName}.`);
       // Decision 1 (REQ-CREATE-5) resolved: the caller navigates to the
       // new request's own page, not home, so focus lands on a heading
       // that confirms *this* request specifically (see requests/new/page
-      // and requests/[id]/page).
+      // and requests/[id]/page). The success announcement itself lives on
+      // that destination page (a persistent role="status" region there),
+      // not here - this component's own node unmounts on navigation and
+      // would never actually be announced by assistive tech.
       onCreated(body);
     } catch {
       setStatus("Network error. Please try again.");
@@ -101,6 +142,7 @@ export function CreateRequestForm({ onCreated }: Props) {
       <div className={styles.field}>
         <label htmlFor={ids.requesterName}>Requester name</label>
         <input
+          ref={requesterNameRef}
           id={ids.requesterName}
           type="text"
           value={values.requesterName}
@@ -118,6 +160,7 @@ export function CreateRequestForm({ onCreated }: Props) {
       <div className={styles.field}>
         <label htmlFor={ids.destination}>Destination</label>
         <input
+          ref={destinationRef}
           id={ids.destination}
           type="text"
           value={values.destination}
@@ -136,6 +179,7 @@ export function CreateRequestForm({ onCreated }: Props) {
         <div className={styles.field}>
           <label htmlFor={ids.startDate}>Start date</label>
           <input
+            ref={startDateRef}
             id={ids.startDate}
             type="date"
             value={values.startDate}
@@ -153,6 +197,7 @@ export function CreateRequestForm({ onCreated }: Props) {
         <div className={styles.field}>
           <label htmlFor={ids.endDate}>End date</label>
           <input
+            ref={endDateRef}
             id={ids.endDate}
             type="date"
             value={values.endDate}
@@ -171,6 +216,7 @@ export function CreateRequestForm({ onCreated }: Props) {
       <div className={styles.field}>
         <label htmlFor={ids.reason}>Reason</label>
         <textarea
+          ref={reasonRef}
           id={ids.reason}
           value={values.reason}
           onChange={setField("reason")}
