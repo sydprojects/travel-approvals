@@ -26,19 +26,15 @@ export function mapValidationError(error: ZodError): MappedError {
   };
 }
 
-export function mapDownstreamError(status: number, body: unknown): MappedError {
-  const fallback = "The platform service could not complete this request.";
-  if (status === 404) {
-    return { status: 404, body: { error: "Request not found." } };
-  }
-  if (status === 409) {
-    const message =
-      typeof body === "object" && body !== null && "error" in body && typeof (body as { error: unknown }).error === "string"
-        ? (body as { error: string }).error
-        : "This request has already been decided.";
-    return { status: 409, body: { error: message } };
-  }
-  // Anything else (5xx, network failure, unexpected shape) is mapped to a
-  // generic 502 - the raw downstream body/stack never reaches the browser.
-  return { status: 502, body: { error: fallback } };
+/**
+ * REQ-BFF-2 / REQ-BFF-3: maps a downstream status code to a fixed,
+ * user-facing message, per the table in docs/requirements.md. Takes only
+ * a status code, never the downstream body, so there is no code path by
+ * which a leaked secret could reach the mapped output.
+ *
+ * TODO(eduardo): implement from the table in docs/requirements.md.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentionally unused until the stub below is implemented
+export function mapDownstreamError(_status: number): MappedError {
+  throw new Error("mapDownstreamError not implemented - TODO(eduardo): implement from the table in docs/requirements.md");
 }
