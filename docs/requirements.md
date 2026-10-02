@@ -206,14 +206,13 @@ distinct, correct content.
   | timeout | 504 | "The service took too long. Please try again." |
   | network / 5xx / anything else | 502 | "The service is unavailable. Please try again." |
 
-  `mapDownstreamError` is currently a stub that throws
-  (`TODO(eduardo)` in `web/src/lib/mapError.ts`) - implementing this table
-  is the one piece of this requirement left undone on purpose.
+  `mapDownstreamError` (implemented by Eduardo, `web/src/lib/mapError.ts`)
+  via a status-to-message lookup; any status outside the table falls back
+  to the 502 entry.
   Verified by: `web/src/lib/mapError.test.ts` (one test per table row,
-  plus a leak-safety invariant), currently failing until the table is
-  implemented. `web/src/app/api/requests/route.test.ts` additionally
-  asserts the exact message text matches `lib/messages.ts`, not zod's
-  default copy.
+  plus a leak-safety invariant). `web/src/app/api/requests/route.test.ts`
+  additionally asserts the exact message text matches `lib/messages.ts`,
+  not zod's default copy.
 - **REQ-BFF-3**: A downstream platform-API failure (timeout, 500, network
   error) results in a `5xx` from the BFF with the mapped shape from
   REQ-BFF-2, never an unhandled exception or a `200` with an error message
@@ -224,10 +223,8 @@ distinct, correct content.
   sees the status.
   Verified by: `web/src/lib/platformApi.test.ts` (timeout path via a
   fetch mock that only resolves on abort, and a network-failure path);
-  the "never an unhandled exception" half of this requirement currently
-  fails at the route level until `mapDownstreamError`'s table (REQ-BFF-2)
-  is implemented, since every route handler that hits a downstream error
-  calls it.
+  the "never an unhandled exception" half is covered end to end now that
+  `mapDownstreamError` (REQ-BFF-2) is implemented.
 
 ## Resolved decisions
 

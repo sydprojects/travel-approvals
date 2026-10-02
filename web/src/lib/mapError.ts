@@ -26,15 +26,26 @@ export function mapValidationError(error: ZodError): MappedError {
   };
 }
 
+const DOWNSTREAM_ERROR_MAP: Record<number, string> = {
+  400: "Some details could not be accepted.",
+  404: "Request not found.",
+  409: "This request has already been decided.",
+  502: "The service is unavailable. Please try again.",
+  504: "The service took too long. Please try again.",
+};
+
 /**
  * REQ-BFF-2 / REQ-BFF-3: maps a downstream status code to a fixed,
  * user-facing message, per the table in docs/requirements.md. Takes only
  * a status code, never the downstream body, so there is no code path by
- * which a leaked secret could reach the mapped output.
+ * which a leaked secret could reach the mapped output. Any status not in
+ * the table (other downstream 5xx, anything unexpected) falls back to the
+ * 502 entry, matching the table's "network / 5xx / anything else" row.
  *
- * TODO(eduardo): implement from the table in docs/requirements.md.
+ * Implemented by Eduardo.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentionally unused until the stub below is implemented
-export function mapDownstreamError(_status: number): MappedError {
-  throw new Error("mapDownstreamError not implemented - TODO(eduardo): implement from the table in docs/requirements.md");
+export function mapDownstreamError(status: number): MappedError {
+  const isKnown = status in DOWNSTREAM_ERROR_MAP;
+  const finalStatus = isKnown ? status : 502;
+  return { status: finalStatus, body: { error: DOWNSTREAM_ERROR_MAP[finalStatus] } };
 }
