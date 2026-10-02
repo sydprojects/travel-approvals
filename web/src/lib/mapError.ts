@@ -41,8 +41,6 @@ const DOWNSTREAM_ERROR_MAP: Record<number, string> = {
  * which a leaked secret could reach the mapped output. Any status not in
  * the table (other downstream 5xx, anything unexpected) falls back to the
  * 502 entry, matching the table's "network / 5xx / anything else" row.
- *
- * Implemented by Eduardo.
  */
 export function mapDownstreamError(status: number): MappedError {
   const isKnown = status in DOWNSTREAM_ERROR_MAP;
