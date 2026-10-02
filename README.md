@@ -112,4 +112,44 @@ Target: WCAG 2.2 AA. Checked with tooling, not assumed:
 - Verified `docker compose up` actually builds and runs both services from
   a clean clone, not just the working copy.
 
+## Decisions
+
+### Focus and announcement after submitting the form (REQ-CREATE-5)
+
+Success: the user is navigated to /requests/{id}?created=1. Focus moves to the h1, "Travel request: [name]", and a role="status" region, which exists from the initial render, announces "Request created.". The URL parameter is then cleared so that refreshing the page does not repeat the message.
+
+Error, whether client-side or server-side: focus moves to the first invalid field in visual order, while the error summary remains in aria-live.
+
+Why: previously, the success message was written into a node that disappeared during navigation, so it was never announced. On error, keyboard users were left focused on the button without knowing which field had failed. Now focus moves to the place where the user needs to take action.
+
+Rejected: a GOV.UK-style error summary at the top of the form, because it would add more code for a five-field form.
+
+### BFF error mapping (REQ-BFF-2 and 3)
+
+A fixed mapping table with application-owned messages:
+
+400 → 400 "Some details could not be accepted."
+
+404 → 404 "Request not found."
+
+409 → 409 "This request has already been decided."
+
+timeout → 504 "The service took too long. Please try again."
+
+everything else → 502 "The service is unavailable. Please try again."
+
+mapDownstreamError(status) receives only the status code and never the API response body, so there is no way for internal API text to leak through. You implemented it against failing tests.
+
+The timeout is 5 seconds, configurable through PLATFORM_TIMEOUT_MS, and is detected in platformApi.ts. Detection and error translation are kept separate.
+
+Field-level messages come from lib/messages.ts, providing a single source of truth for both the client and Zod. The user sees the same message regardless of where the validation error originates.
+
+Why: previously, an API 400 ended up as a 502, the 409 response forwarded text from the API, and the timeout required by the specification did not exist.
+
+### Empty state (REQ-STATE-2)
+
+"Create your first request" is retained.
+
+Why: since the application currently has no roles, creating a request is the only useful action available from an empty list. If approver roles were introduced, the message would need to change to "nothing to review".
+
 No invented users, metrics, or production claims beyond what's stated above.

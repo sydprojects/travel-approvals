@@ -229,30 +229,47 @@ distinct, correct content.
 ## Resolved decisions
 
 These three were originally stubbed as open product/UX decisions, each
-with a documented trade-off, for a human to resolve. They have since been
-resolved (2026-09-30); this records what was chosen and why, so the
-reasoning survives even though the trade-off framing is no longer live in
-the code.
+with a documented trade-off. This section records what was chosen and
+why, so the reasoning survives even though the trade-off framing is no
+longer live in the code. Last revised 2026-10-02.
 
-1. **Focus management after create-submit** (REQ-CREATE-5). Chosen:
-   navigate to the new request's own page rather than back to the form,
-   and its heading now includes the requester's name (`Travel request:
-   Jamie Lee`, not just `Travel request details`). Reasoning: "something
-   happened and here it is" needed to be concrete enough to verify - a
-   generic landing technically moves focus but doesn't confirm *which*
-   request was created, which was the actual gap this decision existed to
-   close. The rapid-multi-create case (staying on the form) was judged
-   less important than confirmation for a low-volume approvals workflow.
+1. **Focus and announcement after submitting the form** (REQ-CREATE-5).
+   Chosen: on success, navigate to `/requests/{id}?created=1`. Focus
+   lands on the `h1`, `Travel request: [name]`, and a `role="status"`
+   region, present from the initial render, announces "Request created.".
+   The query parameter is then stripped via `router.replace` so a refresh
+   does not repeat the announcement. On an invalid submit, whether
+   client-side or server-returned, focus moves to the first invalid field
+   in visual order, while the error summary remains in `aria-live`.
+   Reasoning: the earlier version wrote the success message into a node
+   that unmounted on navigation, so it was never announced; on error,
+   keyboard users were left focused on the submit button with no
+   indication of which field needed correction. Moving focus to where
+   action is needed addresses both. Considered and not used: a
+   GOV.UK-style error summary at the top of the form, since it would add
+   more code than a five-field form needs.
 
-2. **BFF error-mapping shape** (REQ-BFF-2). Chosen: structured
-   `{ error: string, fields?: Record<string, string> }`. Reasoning: a flat
-   message would have meant the BFF's own zod validation (the
-   authoritative check, per REQ-BFF-1) could never actually reach the user
-   as a field-level error - only client-side validation could, making the
-   server-side check purely defensive and functionally invisible. The
-   extra mapping code is worth it specifically because it makes REQ-CREATE-2
-   (per-field errors) genuinely hold for server-side failures too, not
-   only for the client-side checks that usually catch things first.
+2. **BFF error-mapping shape** (REQ-BFF-2, REQ-BFF-3). Chosen: a fixed
+   status-to-message table.
+   - 400 -> 400 "Some details could not be accepted."
+   - 404 -> 404 "Request not found."
+   - 409 -> 409 "This request has already been decided."
+   - timeout -> 504 "The service took too long. Please try again."
+   - everything else -> 502 "The service is unavailable. Please try
+     again."
+
+   `mapDownstreamError(status)` receives only the status code, never the
+   downstream response body, so internal API text cannot leak through
+   regardless of implementation. The 5 second platform timeout
+   (configurable via `PLATFORM_TIMEOUT_MS`) is detected in
+   `platformApi.ts`; detection and error-message translation are kept as
+   separate concerns. Field-level messages come from `lib/messages.ts`, a
+   single source of truth used by both client-side validation and the zod
+   schemas, so the message is identical regardless of where the
+   validation error originates. Reasoning: previously, a downstream 400
+   would have mapped to a generic 502, a 409 response would have
+   forwarded the platform API's own text, and no timeout handling existed
+   despite being part of the specification.
 
 3. **Empty-state copy and behaviour** (REQ-STATE-2). Chosen: add a "Create
    your first request" call-to-action linking to `/requests/new`, not a
