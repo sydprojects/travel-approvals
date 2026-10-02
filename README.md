@@ -91,9 +91,36 @@ Target: WCAG 2.2 AA. Checked with tooling, not assumed:
 - Async outcomes (create, approve, reject) are announced through an
   `aria-live="polite"` region.
 
-<!-- EDUARDO: decisions -->
+## Decisions
 
-## How this was built
+### Focus and announcement after submitting the form (REQ-CREATE-5)
+
+- Success: I navigate the user to /requests/{id}?created=1. I move focus to the h1, "Travel request: [name]", and use a role="status" region that exists from the initial render to announce "Request created.". I then clear the URL parameter so refreshing the page does not announce the message again.
+- Error: for both client-side and server-side validation errors, I move focus to the first invalid field in visual order, while keeping the error summary in aria-live.
+- Why I chose this approach: previously, the success message was written into a node that disappeared during navigation, so it was never announced. On validation errors, keyboard users were left focused on the submit button without knowing which field needed attention. I changed the focus behaviour so it moves directly to the place where the user needs to act.
+- What I rejected: I considered adding a GOV.UK-style error summary at the top of the form, but decided against it because it would add unnecessary complexity for a form with only five fields.
+
+### BFF error mapping (REQ-BFF-2 and 3)
+
+- I added a fixed mapping table with application-owned messages:
+
+  - 400 → 400 "Some details could not be accepted."
+  - 404 → 404 "Request not found."
+  - 409 → 409 "This request has already been decided."
+  - timeout → 504 "The service took too long. Please try again."
+  - everything else → 502 "The service is unavailable. Please try again."
+- I designed mapDownstreamError(status) so it receives only the downstream status code and never the API response body. This prevents internal API messages from leaking through the BFF. I implemented this behaviour by first writing the failing tests and then making the implementation pass them.
+- I also added a 5-second timeout, configurable through PLATFORM_TIMEOUT_MS, with timeout detection handled in platformApi.ts. I deliberately kept timeout detection separate from error translation so each responsibility remains isolated.
+- For field-level validation messages, I moved the messages into lib/messages.ts and use that as the single source of truth for both the client and Zod. This means the user sees the same validation message regardless of where the error originates.
+- Why I made these changes: previously, an API 400 was being translated into a 502, the 409 response could expose text coming directly from the downstream API, and the timeout required by the specification had not been implemented.
+
+### Empty state (REQ-STATE-2)
+
+- I kept "Create your first request" as the empty-state message.
+
+- Why: the application currently has no role-based behaviour, so creating a request is the only useful action available when the list is empty. If approver roles are introduced later, I would change this message to something appropriate for that context, such as "Nothing to review".
+
+### How this was built
 
 - Wrote `docs/requirements.md` first: every acceptance criterion got an ID
   and a named test file, before any test or component existed.
@@ -111,45 +138,5 @@ Target: WCAG 2.2 AA. Checked with tooling, not assumed:
   wasn't accounting for), not just retried until green.
 - Verified `docker compose up` actually builds and runs both services from
   a clean clone, not just the working copy.
-
-## Decisions
-
-### Focus and announcement after submitting the form (REQ-CREATE-5)
-
-Success: the user is navigated to /requests/{id}?created=1. Focus moves to the h1, "Travel request: [name]", and a role="status" region, which exists from the initial render, announces "Request created.". The URL parameter is then cleared so that refreshing the page does not repeat the message.
-
-Error, whether client-side or server-side: focus moves to the first invalid field in visual order, while the error summary remains in aria-live.
-
-Why: previously, the success message was written into a node that disappeared during navigation, so it was never announced. On error, keyboard users were left focused on the button without knowing which field had failed. Now focus moves to the place where the user needs to take action.
-
-Rejected: a GOV.UK-style error summary at the top of the form, because it would add more code for a five-field form.
-
-### BFF error mapping (REQ-BFF-2 and 3)
-
-A fixed mapping table with application-owned messages:
-
-400 → 400 "Some details could not be accepted."
-
-404 → 404 "Request not found."
-
-409 → 409 "This request has already been decided."
-
-timeout → 504 "The service took too long. Please try again."
-
-everything else → 502 "The service is unavailable. Please try again."
-
-mapDownstreamError(status) receives only the status code and never the API response body, so there is no way for internal API text to leak through. You implemented it against failing tests.
-
-The timeout is 5 seconds, configurable through PLATFORM_TIMEOUT_MS, and is detected in platformApi.ts. Detection and error translation are kept separate.
-
-Field-level messages come from lib/messages.ts, providing a single source of truth for both the client and Zod. The user sees the same message regardless of where the validation error originates.
-
-Why: previously, an API 400 ended up as a 502, the 409 response forwarded text from the API, and the timeout required by the specification did not exist.
-
-### Empty state (REQ-STATE-2)
-
-"Create your first request" is retained.
-
-Why: since the application currently has no roles, creating a request is the only useful action available from an empty list. If approver roles were introduced, the message would need to change to "nothing to review".
 
 No invented users, metrics, or production claims beyond what's stated above.
